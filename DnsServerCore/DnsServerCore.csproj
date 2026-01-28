@@ -49,7 +49,7 @@
 	</ItemGroup>
 
 	<!-- Frontend Build Target -->
-	<Target Name="BuildFrontend" BeforeTargets="Build">
+	<Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(SkipFrontendBuild)' != 'true'">
 		<Message Text="Building Vue.js frontend..." Importance="high" />
 		<Exec Command="npm install" WorkingDirectory="$(ProjectDir)..\frontend" ContinueOnError="true" />
 		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)..\frontend" ContinueOnError="false" />
@@ -57,7 +57,7 @@
 	</Target>
 
 	<!-- Copy Frontend Dist Files -->
-	<Target Name="CopyFrontendDist" AfterTargets="BuildFrontend">
+	<Target Name="CopyFrontendDist" AfterTargets="BuildFrontend" Condition="'$(SkipFrontendBuild)' != 'true'">
 		<Message Text="Copying frontend dist files..." Importance="high" />
 		<ItemGroup>
 			<FrontendDistFiles Include="$(ProjectDir)..\frontend\dist\**\*" />
