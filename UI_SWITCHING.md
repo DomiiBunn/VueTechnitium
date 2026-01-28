@@ -5,6 +5,7 @@ This document explains how the UI switching system works between the legacy jQue
 ## Architecture
 
 ### File Structure
+
 - `DnsServerCore/www/` - Legacy UI files (jQuery-based)
 - `DnsServerCore/www-new/` - New UI files (Vue.js, built from frontend/)
 - `frontend/` - Vue.js source code for the new UI
@@ -33,6 +34,7 @@ dotnet publish
 ```
 
 The build process will automatically:
+
 1. Build the Vue.js frontend
 2. Copy the dist files to `www-new/`
 3. Build the C# project with both UIs embedded
@@ -42,17 +44,20 @@ The build process will automatically:
 ### Cookie-Based Selection
 
 Users can switch between UIs using the `ui-version` cookie:
+
 - `ui-version=legacy` - Serves files from `www/` (default)
 - `ui-version=new` - Serves files from `www-new/`
 
 ### API Endpoints
 
 #### Get Current UI Preference
+
 ```http
 GET /api/ui/preference
 ```
 
 **Response:**
+
 ```json
 {
   "uiVersion": "legacy"
@@ -60,16 +65,19 @@ GET /api/ui/preference
 ```
 
 #### Set UI Preference
+
 ```http
 POST /api/ui/preference?version=new
 ```
 
 or with form data:
+
 ```
 version=new
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -93,6 +101,7 @@ version=new
 ## Frontend Development
 
 ### Development Mode
+
 While developing the Vue.js frontend:
 
 ```bash
@@ -104,6 +113,7 @@ npm run serve
 This starts a local development server at `http://localhost:8080`
 
 ### Building for Production
+
 ```bash
 cd /root/technitium/DnsServer/frontend
 npm run build
@@ -112,6 +122,7 @@ npm run build
 The built files will be in `frontend/dist/`
 
 ### Production Integration
+
 When building the entire DnsServer project, the frontend build is automatic:
 
 ```bash
@@ -120,6 +131,7 @@ dotnet build  # or dotnet publish
 ```
 
 This will:
+
 1. Build the frontend (if nodejs/npm available)
 2. Copy to `www-new/`
 3. Include both UIs in the published output
@@ -127,6 +139,7 @@ This will:
 ## Cookie Settings
 
 The `ui-version` cookie is configured with:
+
 - **HttpOnly**: `true` - Not accessible via JavaScript (security)
 - **SameSite**: `Strict` - CSRF protection
 - **Expires**: 1 year from set
@@ -134,12 +147,14 @@ The `ui-version` cookie is configured with:
 ## Testing UI Switching
 
 ### Browser DevTools Method
+
 1. Open DevTools (F12)
 2. Go to Application > Cookies
 3. Add/edit `ui-version` cookie to `"new"` or `"legacy"`
 4. Refresh the page
 
 ### API Method
+
 ```bash
 # Switch to new UI
 curl -X POST "http://localhost:5380/api/ui/preference?version=new"
