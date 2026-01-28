@@ -1,0 +1,82 @@
+[
+    {
+        "text": "A",
+        "value": "A"
+    },
+    {
+        "text": "NS",
+        "value": "NS"
+    },
+    {
+        "text": "CNAME",
+        "value": "CNAME"
+    },
+    {
+        "text": "SOA",
+        "value": "SOA"
+    },
+    {
+        "text": "PTR",
+        "value": "PTR"
+    },
+    {
+        "text": "MX",
+        "value": "MX"
+    },
+    {
+        "text": "TXT",
+        "value": "TXT"
+    },
+    {
+        "text": "AAAA",
+        "value": "AAAA"
+    },
+    {
+        "text": "SRV",
+        "value": "SRV"
+    },
+    {
+        "text": "DNAME",
+        "value": "DNAME"
+    },
+    {
+        "text": "DS",
+        "value": "DS"
+    },
+    {
+        "text": "RRSIG",
+        "value": "RRSIG"
+    },
+    {
+        "text": "NSEC",
+        "value": "NSEC"
+    },
+    {
+        "text": "DNSKEY",
+        "value": "DNSKEY"
+    },
+    {
+        "text": "NSEC3",
+        "value": "NSEC3"
+    },
+    {
+        "text": "NSEC3PARAM",
+        "value": "NSEC3PARAM"
+    },
+    {
+        "text": "CAA",
+        "value": "CAA"
+    },
+    {
+        "text": "ANY",
+        "value": "ANY"
+    },
+    {
+        "text": "AXFR",
+        "value": "AXFR"
+    },
+    {
+        "text": "ANAME",
+        "value": "ANAME"
+    }
+]

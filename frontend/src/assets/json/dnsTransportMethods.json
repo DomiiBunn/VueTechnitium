@@ -1,0 +1,22 @@
+[
+    {
+        "text": "UDP",
+        "value": "UDP"
+    },
+    {
+        "text": "TCP",
+        "value": "TCP"
+    },
+    {
+        "text": "TLS",
+        "value": "TLS"
+    },
+    {
+        "text": "HTTPS",
+        "value": "Https"
+    },
+    {
+        "text": "HTTPS (JSON)",
+        "value": "HttpsJson"
+    }
+]

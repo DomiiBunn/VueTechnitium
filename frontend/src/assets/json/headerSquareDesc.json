@@ -1,0 +1,12 @@
+{
+    "Total": "Total number of DNS queries served.",
+    "No Error": "Number of DNS queries resolved without an error",
+    "Server Failure": "Server Failure",
+    "NX Domain": "Number of DNS queries server has responded to with NS Domain",
+    "Refused": "Number of DNS queries server has refused to answer",
+    "Authoritative": "Number of Authoritative queries server has answered",
+    "Recursive": "Number of Recursive DNS queries server has answered",
+    "Cached": "Number of DNS queries server has answered from cache",
+    "Blocked": "Number of DNS queries server has blocked",
+    "Clients": "Number of client devices server has answered to"
+}

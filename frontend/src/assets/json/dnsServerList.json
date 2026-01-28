@@ -1,0 +1,238 @@
+[
+    {
+        "text": "This Server",
+        "value": "this-server"
+    },
+    {
+        "text": "Recursive Query",
+        "value": "recursive-resolver"
+    },
+    {
+        "text": "Cloudflare 1.1.1.1",
+        "value": "1.1.1.1"
+    },
+    {
+        "text": "Cloudflare 1.0.0.1",
+        "value": "1.0.0.1"
+    },
+    {
+        "text": "Cloudflare 2606:4700:4700::1111",
+        "value": "2606:4700:4700::1111"
+    },
+    {
+        "text": "Cloudflare 2606:4700:4700::1001",
+        "value": "2606:4700:4700::1001"
+    },
+    {
+        "text": "Cloudflare TLS cloudflare-dns.com (1.1.1.1:853)",
+        "value": "cloudflare-dns.com (1.1.1.1:853)"
+    },
+    {
+        "text": "Cloudflare TLS cloudflare-dns.com (1.0.0.1:853)",
+        "value": "cloudflare-dns.com (1.0.0.1:853)"
+    },
+    {
+        "text": "Cloudflare TLS cloudflare-dns.com ([2606:4700:4700::1111]:853)",
+        "value": "cloudflare-dns.com ([2606:4700:4700::1111]:853)"
+    },
+    {
+        "text": "Cloudflare TLS cloudflare-dns.com ([2606:4700:4700::1001]:853)",
+        "value": "cloudflare-dns.com ([2606:4700:4700::1001]:853)"
+    },
+    {
+        "text": "Cloudflare HTTPS https://cloudflare-dns.com/dns-query (1.1.1.1)",
+        "value": "https://cloudflare-dns.com/dns-query (1.1.1.1)"
+    },
+    {
+        "text": "Cloudflare HTTPS-JSON https://cloudflare-dns.com/dns-query (1.1.1.1)",
+        "value": "https://cloudflare-dns.com/dns-query (1.1.1.1)"
+    },
+    {
+        "text": "Google 8.8.8.8",
+        "value": "8.8.8.8"
+    },
+    {
+        "text": "Google 8.8.4.4",
+        "value": "8.8.4.4"
+    },
+    {
+        "text": "Google [2001:4860:4860::8888]",
+        "value": "[2001:4860:4860::8888]"
+    },
+    {
+        "text": "Google [2001:4860:4860::8844]",
+        "value": "[2001:4860:4860::8844]"
+    },
+    {
+        "text": "Google TLS dns.google (8.8.8.8:853)",
+        "value": "dns.google (8.8.8.8:853)"
+    },
+    {
+        "text": "Google TLS dns.google (8.8.4.4:853)",
+        "value": "dns.google (8.8.4.4:853)"
+    },
+    {
+        "text": "Google TLS dns.google ([2001:4860:4860::8888]:853)",
+        "value": "dns.google ([2001:4860:4860::8888]:853)"
+    },
+    {
+        "text": "Google TLS dns.google ([2001:4860:4860::8844]:853)",
+        "value": "dns.google ([2001:4860:4860::8844]:853)"
+    },
+    {
+        "text": "Google HTTPS https://dns.google/dns-query (8.8.8.8)",
+        "value": "https://dns.google/dns-query (8.8.8.8)"
+    },
+    {
+        "text": "Google HTTPS-JSON https://dns.google/resolve (8.8.8.8)",
+        "value": "https://dns.google/resolve (8.8.8.8)"
+    },
+    {
+        "text": "Quad9 Secure 9.9.9.9",
+        "value": "9.9.9.9"
+    },
+    {
+        "text": "Quad9 Secure [2620:fe::fe]",
+        "value": "[2620:fe::fe]"
+    },
+    {
+        "text": "Quad9 Secure TLS dns.quad9.net (9.9.9.9:853)",
+        "value": "dns.quad9.net (9.9.9.9:853)"
+    },
+    {
+        "text": "Quad9 Secure TLS dns.quad9.net ([2620:fe::fe]:853)",
+        "value": "dns.quad9.net ([2620:fe::fe]:853)"
+    },
+    {
+        "text": "Quad9 Secure HTTPS https://dns.quad9.net/dns-query (9.9.9.9)",
+        "value": "https://dns.quad9.net/dns-query (9.9.9.9)"
+    },
+    {
+        "text": "Quad9 Unsecure 9.9.9.10",
+        "value": "9.9.9.10"
+    },
+    {
+        "text": "Quad9 Unsecure [2620:fe::10]",
+        "value": "[2620:fe::10]"
+    },
+    {
+        "text": "Quad9 Unsecure TLS dns10.quad9.net (9.9.9.10:853)",
+        "value": "dns10.quad9.net (9.9.9.10:853)"
+    },
+    {
+        "text": "Quad9 Unsecure TLS dns10.quad9.net ([2620:fe::10]:853)",
+        "value": "dns10.quad9.net ([2620:fe::10]:853)"
+    },
+    {
+        "text": "Quad9 Unsecure HTTPS https://dns10.quad9.net/dns-query (9.9.9.10)",
+        "value": "https://dns10.quad9.net/dns-query (9.9.9.10)"
+    },
+    {
+        "text": "OpenDNS 208.67.222.222",
+        "value": "208.67.222.222"
+    },
+    {
+        "text": "OpenDNS 208.67.220.220",
+        "value": "208.67.220.220"
+    },
+    {
+        "text": "OpenDNS [2620:0:ccc::2]",
+        "value": "[2620:0:ccc::2]"
+    },
+    {
+        "text": "OpenDNS [2620:0:ccd::2]",
+        "value": "[2620:0:ccd::2]"
+    },
+    {
+        "text": "OpenDNS HTTPS https://doh.opendns.com/dns-query",
+        "value": "https://doh.opendns.com/dns-query"
+    },
+    {
+        "text": "OpenDNS FamilyShield 208.67.222.123",
+        "value": "208.67.222.123"
+    },
+    {
+        "text": "OpenDNS FamilyShield 208.67.220.123",
+        "value": "208.67.220.123"
+    },
+    {
+        "text": "OpenDNS FamilyShield HTTPS https://doh.familyshield.opendns.com/dns-query",
+        "value": "https://doh.familyshield.opendns.com/dns-query"
+    },
+    {
+        "text": "Level3 4.2.2.1",
+        "value": "4.2.2.1"
+    },
+    {
+        "text": "Level3 4.2.2.2",
+        "value": "4.2.2.2"
+    },
+    {
+        "text": "Ultra 156.154.70.1",
+        "value": "156.154.70.1"
+    },
+    {
+        "text": "Ultra 156.154.71.1",
+        "value": "156.154.71.1"
+    },
+    {
+        "text": "Dyn 216.146.35.35",
+        "value": "216.146.35.35"
+    },
+    {
+        "text": "Dyn 216.146.36.36",
+        "value": "216.146.36.36"
+    },
+    {
+        "text": "Root Server a.root-servers.net",
+        "value": "a.root-servers.net"
+    },
+    {
+        "text": "Root Server b.root-servers.net",
+        "value": "b.root-servers.net"
+    },
+    {
+        "text": "Root Server c.root-servers.net",
+        "value": "c.root-servers.net"
+    },
+    {
+        "text": "Root Server d.root-servers.net",
+        "value": "d.root-servers.net"
+    },
+    {
+        "text": "Root Server e.root-servers.net",
+        "value": "e.root-servers.net"
+    },
+    {
+        "text": "Root Server f.root-servers.net",
+        "value": "f.root-servers.net"
+    },
+    {
+        "text": "Root Server g.root-servers.net",
+        "value": "g.root-servers.net"
+    },
+    {
+        "text": "Root Server h.root-servers.net",
+        "value": "h.root-servers.net"
+    },
+    {
+        "text": "Root Server i.root-servers.net",
+        "value": "i.root-servers.net"
+    },
+    {
+        "text": "Root Server j.root-servers.net",
+        "value": "j.root-servers.net"
+    },
+    {
+        "text": "Root Server k.root-servers.net",
+        "value": "k.root-servers.net"
+    },
+    {
+        "text": "Root Server l.root-servers.net",
+        "value": "l.root-servers.net"
+    },
+    {
+        "text": "Root Server m.root-servers.net",
+        "value": "m.root-servers.net"
+    }
+]

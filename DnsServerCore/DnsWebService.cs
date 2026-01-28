@@ -1588,6 +1588,8 @@ namespace DnsServerCore
                 _webService.Use(WebServiceHttpsRedirectionMiddleware);
 
             _webService.UseDefaultFiles();
+            
+            // Serve static files from legacy UI (www)
             _webService.UseStaticFiles(new StaticFileOptions()
             {
                 OnPrepareResponse = delegate (StaticFileResponseContext ctx)
@@ -1597,6 +1599,26 @@ namespace DnsServerCore
                 },
                 ServeUnknownFileTypes = true
             });
+
+            // Also serve static files from new UI (www-new) if available
+            string wwwNewPath = Path.Combine(_appFolder, "www-new");
+            if (Directory.Exists(wwwNewPath))
+            {
+                _webService.UseStaticFiles(new StaticFileOptions()
+                {
+                    FileProvider = new PhysicalFileProvider(wwwNewPath),
+                    RequestPath = "",
+                    OnPrepareResponse = delegate (StaticFileResponseContext ctx)
+                    {
+                        ctx.Context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+                        ctx.Context.Response.Headers.CacheControl = "no-cache";
+                    },
+                    ServeUnknownFileTypes = true
+                });
+            }
+            
+            // Add middleware to redirect to correct UI version
+            _webService.Use(WebServiceUIRoutingMiddleware);
 
             ConfigureWebServiceRoutes();
 
@@ -1660,6 +1682,9 @@ namespace DnsServerCore
             _webService.UseExceptionHandler(WebServiceExceptionHandler);
 
             _webService.Use(WebServiceApiMiddleware);
+
+            // UI switching middleware
+            _webService.Use(WebServiceUISwitchingMiddleware);
 
             _webService.UseRouting();
 
@@ -1883,6 +1908,92 @@ namespace DnsServerCore
 
             context.Response.Redirect("https://" + (context.Request.Host.HasValue ? context.Request.Host.Host : _dnsServer.ServerDomain) + (_webServiceTlsPort == 443 ? "" : ":" + _webServiceTlsPort) + context.Request.Path + (context.Request.QueryString.HasValue ? context.Request.QueryString.Value : ""), false, true);
             return Task.CompletedTask;
+        }
+
+        private async Task WebServiceUISwitchingMiddleware(HttpContext context, RequestDelegate next)
+        {
+            HttpRequest request = context.Request;
+            string path = request.Path.Value ?? "";
+
+            // Handle UI preference endpoint
+            if (path.Equals("/api/ui/preference", StringComparison.OrdinalIgnoreCase))
+            {
+                if (request.Method.Equals("GET", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Get current UI preference
+                    string uiVersion = request.Cookies.TryGetValue("ui-version", out var value) ? value : "legacy";
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsJsonAsync(new { uiVersion = uiVersion });
+                    return;
+                }
+                else if (request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Set UI preference
+                    string uiVersion = request.GetQueryOrForm("version", "legacy");
+                    if (uiVersion != "legacy" && uiVersion != "new")
+                        uiVersion = "legacy";
+
+                    context.Response.Cookies.Append("ui-version", uiVersion, new Microsoft.AspNetCore.Http.CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddYears(1)
+                    });
+
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsJsonAsync(new { status = "success", uiVersion = uiVersion });
+                    return;
+                }
+            }
+
+            await next(context);
+        }
+
+        private async Task WebServiceUIRoutingMiddleware(HttpContext context, RequestDelegate next)
+        {
+            HttpRequest request = context.Request;
+            string path = request.Path.Value ?? "";
+            
+            // Skip API and known static file extensions
+            if (path.StartsWith("/api/") || HasStaticFileExtension(path))
+            {
+                await next(context);
+                return;
+            }
+
+            string uiVersion = request.Cookies.TryGetValue("ui-version", out var value) ? value : "legacy";
+            
+            // For navigation routes without extension (like /dashboard, /zones, etc), check which UI should handle it
+            if (!Path.HasExtension(path) && path != "/" && !string.IsNullOrEmpty(path))
+            {
+                string wwwNewPath = Path.Combine(_appFolder, "www-new");
+                if (uiVersion == "new" && Directory.Exists(wwwNewPath))
+                {
+                    // Check if file exists in new UI
+                    string indexPath = Path.Combine(wwwNewPath, "index.html");
+                    if (File.Exists(indexPath))
+                    {
+                        context.Request.Path = "/index.html";
+                    }
+                }
+                else
+                {
+                    // Default to legacy UI
+                    string indexPath = Path.Combine(_appFolder, "www", "index.html");
+                    if (File.Exists(indexPath))
+                    {
+                        context.Request.Path = "/index.html";
+                    }
+                }
+            }
+            
+            await next(context);
+        }
+
+        private static bool HasStaticFileExtension(string path)
+        {
+            string[] staticExtensions = { ".js", ".css", ".json", ".html", ".ico", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".woff", ".woff2", ".ttf", ".eot", ".map" };
+            return staticExtensions.Any(ext => path.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task WebServiceApiMiddleware(HttpContext context, RequestDelegate next)

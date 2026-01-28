@@ -48,6 +48,24 @@
 		<PackageReference Include="QRCoder" Version="1.7.0" />
 	</ItemGroup>
 
+	<!-- Frontend Build Target -->
+	<Target Name="BuildFrontend" BeforeTargets="Build">
+		<Message Text="Building Vue.js frontend..." Importance="high" />
+		<Exec Command="npm install" WorkingDirectory="$(ProjectDir)..\frontend" ContinueOnError="true" />
+		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)..\frontend" ContinueOnError="false" />
+		<Message Text="Frontend build completed" Importance="high" />
+	</Target>
+
+	<!-- Copy Frontend Dist Files -->
+	<Target Name="CopyFrontendDist" AfterTargets="BuildFrontend">
+		<Message Text="Copying frontend dist files..." Importance="high" />
+		<ItemGroup>
+			<FrontendDistFiles Include="$(ProjectDir)..\frontend\dist\**\*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(FrontendDistFiles)" DestinationFolder="$(ProjectDir)www-new\%(RecursiveDir)" OverwriteReadOnlyFiles="true" />
+		<Message Text="Frontend dist files copied to www-new" Importance="high" />
+	</Target>
+
 	<ItemGroup>
 		<None Remove="dohwww\css\bootstrap.min.css" />
 		<None Remove="dohwww\css\bootstrap.min.css.map" />

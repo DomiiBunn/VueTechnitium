@@ -1,0 +1,8 @@
+stages:
+  - Build Proxy
+
+
+Build Proxy:
+  stage: Build Proxy
+  trigger:
+    project: technitium-vue/middleware

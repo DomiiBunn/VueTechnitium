@@ -1,0 +1,7 @@
+{
+    "Hosted": "Number of zones hosted by the local server",
+    "Cached": "Number of entries caches by the local server",
+    "Allowed": "Number of implicitly allowed zones",
+    "Blocked": "Number of implicitly blocked zones",
+    "Block List": "Number of zones in the server blocklist"
+}

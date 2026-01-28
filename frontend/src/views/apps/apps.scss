@@ -1,0 +1,19 @@
+.flex {
+  width: 100%;
+  display: flex;
+  gap: 20px;
+  justify-content: space-around;
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.card {
+  height: 100%;
+  position: relative;
+  padding-bottom: 40px;
+}
+
+.bottom {
+  position: absolute;
+  bottom: 0px;
+}
