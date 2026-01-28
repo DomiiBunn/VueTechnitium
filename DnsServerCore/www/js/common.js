@@ -329,3 +329,22 @@ function cleanTextList(text) {
 
     return text;
 }
+
+function switchToNewUI() {
+    if (confirm("Switch to the new Vue.js UI? You will be redirected.")) {
+        HTTPRequest("/api/ui/preference?version=new", "POST", null, false,
+            function (response) {
+                if (response.status === "success") {
+                    location.reload();
+                } else {
+                    alert("Failed to switch UI. Please try again.");
+                }
+            },
+            function () {
+                // Fallback: set cookie directly and reload
+                document.cookie = "ui-version=new; path=/;";
+                location.reload();
+            }
+        );
+    }
+}
