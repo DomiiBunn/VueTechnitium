@@ -1587,6 +1587,70 @@ namespace DnsServerCore
             if (_webServiceHttpToTlsRedirect && !httpOnlyMode && _webServiceEnableTls && (_webServiceSslServerAuthenticationOptions is not null))
                 _webService.Use(WebServiceHttpsRedirectionMiddleware);
 
+            // Add UI switching middleware first, before static files
+            _webService.Use(WebServiceUISwitchingMiddleware);
+
+            // Middleware to serve from the correct UI directory based on cookie
+            string wwwNewPath = Path.Combine(_appFolder, "www-new");
+            if (Directory.Exists(wwwNewPath))
+            {
+                _webService.Use(async (context, next) =>
+                {
+                    // Check if user prefers new UI
+                    string uiVersion = context.Request.Cookies.TryGetValue("ui-version", out var value) ? value : "legacy";
+                    string path = context.Request.Path.Value ?? "";
+                    
+                    if (uiVersion == "new")
+                    {
+                        // For root and navigation routes without extension, serve index.html
+                        if (path == "/" || (!Path.HasExtension(path) && !path.StartsWith("/api/")))
+                        {
+                            string newUIIndexPath = Path.Combine(wwwNewPath, "index.html");
+                            if (File.Exists(newUIIndexPath))
+                            {
+                                context.Response.ContentType = "text/html";
+                                context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+                                context.Response.Headers.CacheControl = "no-cache";
+                                using (var fs = File.OpenRead(newUIIndexPath))
+                                {
+                                    await fs.CopyToAsync(context.Response.Body);
+                                }
+                                return;
+                            }
+                        }
+                        
+                        // For static assets (CSS, JS, images, etc.), check if they exist in www-new first
+                        if (Path.HasExtension(path) && !path.StartsWith("/api/"))
+                        {
+                            string filePath = Path.Combine(wwwNewPath, path.TrimStart('/'));
+                            if (File.Exists(filePath))
+                            {
+                                // Serve from www-new
+                                context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+                                context.Response.Headers.CacheControl = "no-cache";
+                                
+                                // Determine content type
+                                var provider = new FileExtensionContentTypeProvider();
+                                if (!provider.TryGetContentType(filePath, out var contentType))
+                                {
+                                    contentType = "application/octet-stream";
+                                }
+                                context.Response.ContentType = contentType;
+                                
+                                using (var fs = File.OpenRead(filePath))
+                                {
+                                    await fs.CopyToAsync(context.Response.Body);
+                                }
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Otherwise, continue to serve from www
+                    await next(context);
+                });
+            }
+
             _webService.UseDefaultFiles();
             
             // Serve static files from legacy UI (www)
@@ -1599,26 +1663,6 @@ namespace DnsServerCore
                 },
                 ServeUnknownFileTypes = true
             });
-
-            // Also serve static files from new UI (www-new) if available
-            string wwwNewPath = Path.Combine(_appFolder, "www-new");
-            if (Directory.Exists(wwwNewPath))
-            {
-                _webService.UseStaticFiles(new StaticFileOptions()
-                {
-                    FileProvider = new PhysicalFileProvider(wwwNewPath),
-                    RequestPath = "",
-                    OnPrepareResponse = delegate (StaticFileResponseContext ctx)
-                    {
-                        ctx.Context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
-                        ctx.Context.Response.Headers.CacheControl = "no-cache";
-                    },
-                    ServeUnknownFileTypes = true
-                });
-            }
-            
-            // Add middleware to redirect to correct UI version
-            _webService.Use(WebServiceUIRoutingMiddleware);
 
             ConfigureWebServiceRoutes();
 
@@ -1682,9 +1726,6 @@ namespace DnsServerCore
             _webService.UseExceptionHandler(WebServiceExceptionHandler);
 
             _webService.Use(WebServiceApiMiddleware);
-
-            // UI switching middleware
-            _webService.Use(WebServiceUISwitchingMiddleware);
 
             _webService.UseRouting();
 
@@ -1928,8 +1969,11 @@ namespace DnsServerCore
                 }
                 else if (request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Set UI preference
-                    string uiVersion = request.GetQueryOrForm("version", "legacy");
+                    // Set UI preference - get version from query parameter
+                    string uiVersion = request.Query["version"].ToString();
+                    if (string.IsNullOrEmpty(uiVersion))
+                        uiVersion = "legacy";
+                    
                     if (uiVersion != "legacy" && uiVersion != "new")
                         uiVersion = "legacy";
 
@@ -1946,47 +1990,6 @@ namespace DnsServerCore
                 }
             }
 
-            await next(context);
-        }
-
-        private async Task WebServiceUIRoutingMiddleware(HttpContext context, RequestDelegate next)
-        {
-            HttpRequest request = context.Request;
-            string path = request.Path.Value ?? "";
-            
-            // Skip API and known static file extensions
-            if (path.StartsWith("/api/") || HasStaticFileExtension(path))
-            {
-                await next(context);
-                return;
-            }
-
-            string uiVersion = request.Cookies.TryGetValue("ui-version", out var value) ? value : "legacy";
-            
-            // For navigation routes without extension (like /dashboard, /zones, etc), check which UI should handle it
-            if (!Path.HasExtension(path) && path != "/" && !string.IsNullOrEmpty(path))
-            {
-                string wwwNewPath = Path.Combine(_appFolder, "www-new");
-                if (uiVersion == "new" && Directory.Exists(wwwNewPath))
-                {
-                    // Check if file exists in new UI
-                    string indexPath = Path.Combine(wwwNewPath, "index.html");
-                    if (File.Exists(indexPath))
-                    {
-                        context.Request.Path = "/index.html";
-                    }
-                }
-                else
-                {
-                    // Default to legacy UI
-                    string indexPath = Path.Combine(_appFolder, "www", "index.html");
-                    if (File.Exists(indexPath))
-                    {
-                        context.Request.Path = "/index.html";
-                    }
-                }
-            }
-            
             await next(context);
         }
 
