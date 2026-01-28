@@ -96,28 +96,33 @@ export default {
       localStorage.setItem("darkMode", JSON.stringify(this.darkMode));
     },
     switchToLegacyUI() {
-      this.$swal.fire({
-        title: "Switch to Legacy UI?",
-        text: "You will be redirected to the legacy UI.",
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Yes, switch",
-        confirmButtonColor: "#6699FF",
-        cancelButtonText: "Cancel"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Set cookie and reload
-          this.$axios.post(`/api/ui/preference?version=legacy&token=${localStorage.appToken}`)
-            .then(() => {
-              location.reload();
-            })
-            .catch(() => {
-              // Fallback if API fails
-              document.cookie = "ui-version=legacy; path=/;";
-              location.reload();
-            });
-        }
-      });
+      this.$swal
+        .fire({
+          title: "Switch to Legacy UI?",
+          text: "You will be redirected to the legacy UI.",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Yes, switch",
+          confirmButtonColor: "#6699FF",
+          cancelButtonText: "Cancel",
+        })
+        .then((result) => {
+          if (result.isConfirmed) {
+            // Set cookie and reload
+            this.$axios
+              .post(
+                `/api/ui/preference?version=legacy&token=${localStorage.appToken}`,
+              )
+              .then(() => {
+                location.reload();
+              })
+              .catch(() => {
+                // Fallback if API fails
+                document.cookie = "ui-version=legacy; path=/;";
+                location.reload();
+              });
+          }
+        });
     },
   },
   mounted() {
