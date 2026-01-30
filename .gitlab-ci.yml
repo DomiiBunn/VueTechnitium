@@ -1,0 +1,148 @@
+
+stages:
+  - build_core
+  - package
+  - docker_build
+  - package_windows_installer
+  - release
+
+variables:
+  TECHNITIUM_LIB_PATH: TechnitiumLibrary
+  DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE # This will be registry.gitlab.com/<group>/<project>
+
+build_dotnet_and_frontend:
+  stage: build_core
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -y git curl
+    # Install Node.js and npm
+    - curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+    - apt-get install -y nodejs
+    # Clone TechnitiumLibrary
+    - git clone --depth 1 https://github.com/TechnitiumSoftware/TechnitiumLibrary.git $TECHNITIUM_LIB_PATH
+  script:
+    - echo "Building TechnitiumLibrary projects..."
+    # Build each TechnitiumLibrary project
+    - dotnet build $TECHNITIUM_LIB_PATH/TechnitiumLibrary.ByteTree/TechnitiumLibrary.ByteTree.csproj -c Release --no-restore
+    - dotnet build $TECHNITIUM_LIB_PATH/TechnitiumLibrary.Net/TechnitiumLibrary.Net.csproj -c Release --no-restore
+    - dotnet build $TECHNITIUM_LIB_PATH/TechnitiumLibrary.Security.OTP/TechnitiumLibrary.Security.OTP.csproj -c Release --no-restore
+    # Create a common bin directory for TechnitiumLibrary as expected by DnsServerCore.csproj
+    - mkdir -p $TECHNITIUM_LIB_PATH/bin
+    - find $TECHNITIUM_LIB_PATH -name "*.dll" -path "*/bin/Release/net9.0/*" -exec cp {} $TECHNITIUM_LIB_PATH/bin/ \;
+    - echo "Building DnsServerCore (triggers frontend build)..."
+    - dotnet build DnsServerCore/DnsServerCore.csproj -c Release --no-restore # This will run npm install & build for frontend
+  artifacts:
+    paths:
+      - $TECHNITIUM_LIB_PATH/bin/ # Contains TechnitiumLibrary DLLs
+      - DnsServerCore/bin/Release/net9.0/ # Contains DnsServerCore DLL and www-new
+    expire_in: 1 week
+
+package_linux_standalone:
+  stage: package
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+  needs:
+    - build_dotnet_and_frontend
+  script:
+    - echo "Publishing Linux standalone..."
+    - dotnet publish DnsServerApp/DnsServerApp.csproj -c Release -r linux-x64 --self-contained true -o ./publish_linux_standalone --no-build
+  artifacts:
+    paths:
+      - ./publish_linux_standalone/
+    expire_in: 1 week
+
+package_windows_standalone:
+  stage: package
+  image: mcr.microsoft.com/dotnet/sdk:9.0
+  needs:
+    - build_dotnet_and_frontend
+  script:
+    - echo "Publishing Windows standalone..."
+    - dotnet publish DnsServerApp/DnsServerApp.csproj -c Release -r win-x64 --self-contained true -o ./publish_windows_standalone --no-build
+  artifacts:
+    paths:
+      - ./publish_windows_standalone/
+    expire_in: 1 week
+
+package_docker_image:
+  stage: docker_build
+  image: docker:latest
+  services:
+    - docker:dind
+  needs:
+    - build_dotnet_and_frontend # Docker build needs the source and potentially built artifacts
+  script:
+    - echo "Building and pushing Docker image..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $DOCKER_IMAGE_NAME:$CI_COMMIT_REF_SLUG .
+    - docker push $DOCKER_IMAGE_NAME:$CI_COMMIT_REF_SLUG
+    - docker tag $DOCKER_IMAGE_NAME:$CI_COMMIT_REF_SLUG $DOCKER_IMAGE_NAME:latest
+    - docker push $DOCKER_IMAGE_NAME:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # Only build/push on default branch
+
+build_windows_installer:
+  stage: package_windows_installer
+  image: mcr.microsoft.com/dotnet/sdk:9.0-jammy # Using jammy for better Wine compatibility
+  needs:
+    - build_dotnet_and_frontend
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -y git curl wget cabextract # Basic tools
+    # Install Wine (stable branch)
+    - dpkg --add-architecture i386 
+    - wget -nc https://dl.winehq.org/wine-builds/winehq.key -O /usr/share/keyrings/winehq-archive.key
+    - wget -nc https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources -O /etc/apt/sources.list.d/winehq-jammy.sources
+    - apt-get update -yqq
+    - apt-get install --install-recommends winehq-stable -y
+    # Install Inno Setup
+    # Using a specific version (6.2.2) to ensure reproducibility
+    - wget -nc https://jrsoftware.org/download.php/is-6.2.2.exe -O inno-setup.exe
+    - wine inno-setup.exe /SP- /SILENT /NORESTART
+    # Inno Setup might be installed to C:\Program Files (x86)\Inno Setup 6\
+    - export INNO_SETUP_PATH="C:\\Program\ Files\ \(x86\)\\Inno\ Setup\ 6\\ISCC.exe"
+    - test -f "$(winepath -u "$INNO_SETUP_PATH")" || { echo "Inno Setup ISCC.exe not found!"; exit 1; }
+
+  script:
+    - echo "Publishing DnsServerSystemTrayApp for Windows..."
+    - dotnet publish DnsServerSystemTrayApp/DnsServerSystemTrayApp.csproj -c Release -r win-x64 --self-contained true -o ./publish_windows_installer/SystemTrayApp --no-build
+    - echo "Publishing DnsServerWindowsService for Windows..."
+    - dotnet publish DnsServerWindowsService/DnsServerWindowsService.csproj -c Release -r win-x64 --self-contained true -o ./publish_windows_installer/WindowsService --no-build
+    
+    # Create the target directory that Inno Setup expects for published files
+    # The build.md suggests DnsServer\DnsServerWindowsSetup\publish
+    - mkdir -p DnsServerWindowsSetup/publish/SystemTrayApp
+    - mkdir -p DnsServerWindowsSetup/publish/WindowsService
+
+    # Copy published applications to the expected location for Inno Setup
+    - cp -r ./publish_windows_installer/SystemTrayApp/* DnsServerWindowsSetup/publish/SystemTrayApp/
+    - cp -r ./publish_windows_installer/WindowsService/* DnsServerWindowsSetup/publish/WindowsService/
+
+    # Compile the Inno Setup script
+    - echo "Compiling Inno Setup script..."
+    - wine "$INNO_SETUP_PATH" DnsServerWindowsSetup/DnsServerSetup.iss
+    
+  artifacts:
+    paths:
+      - DnsServerWindowsSetup/Output/*.exe # Assuming output goes here based on common Inno Setup practice
+    expire_in: 1 week
+
+create_gitlab_release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest # Use the dedicated release-cli image
+  needs:
+    - package_linux_standalone
+    - package_windows_standalone
+    - package_docker_image
+    - build_windows_installer # Added new dependency
+  script:
+    - echo "Creating GitLab Release..."
+    - release_cmd="release-cli create --name \"Release $CI_COMMIT_TAG\" --tag-name \"$CI_COMMIT_TAG\" --description \"Automated release for tag $CI_COMMIT_TAG\""
+    - release_cmd="$release_cmd --assets-link '{\"name\":\"Linux Standalone\",\"url\":\"${CI_SERVER_URL}/${CI_PROJECT_PATH}/-/jobs/${CI_JOB_ID}/artifacts/download?job=package_linux_standalone\",\"link_type\":\"other\"}'"
+    - release_cmd="$release_cmd --assets-link '{\"name\":\"Windows Standalone\",\"url\":\"${CI_SERVER_URL}/${CI_PROJECT_PATH}/-/jobs/${CI_JOB_ID}/artifacts/download?job=package_windows_standalone\",\"link_type\":\"other\"}'"
+    - release_cmd="$release_cmd --assets-link '{\"name\":\"Windows Installer\",\"url\":\"${CI_SERVER_URL}/${CI_PROJECT_PATH}/-/jobs/${CI_JOB_ID}/artifacts/download?job=build_windows_installer\",\"link_type\":\"other\"}'" # New asset link
+    - release_cmd="$release_cmd --assets-link '{\"name\":\"Docker Image\",\"url\":\"${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}\",\"link_type\":\"image\"}'"
+    - eval "$release_cmd"
+  rules:
+    - if: $CI_COMMIT_TAG
+
